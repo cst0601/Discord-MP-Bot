@@ -58,21 +58,26 @@ public class StreamNotifierRunner extends Thread {
 		messageBox.put(message);
 	}
 	
-	private boolean containsUpcomingStream(UpcommingStream newStream) {
-		for (UpcommingStream stream: upcommingStreams) {
-			if (stream.getStreamUrl().equals(newStream.getStreamUrl()))
-				return true;
+	private int containsUpcomingStream(UpcommingStream newStream) {
+		for (int i = 0; i < upcommingStreams.size(); ++i) {
+			if (upcommingStreams.get(i).getStreamUrl().equals(newStream.getStreamUrl()))
+				return i;
 		}
-		return false;
+		return -1;
 	}
 	
 	private void updateUpcomingStreams() {
 		try {
 			for (LiveStream stream: api.getStreamOfMember(memberName, "upcoming")) {
 				UpcommingStream upcommingStream = new UpcommingStream(stream, pingRole);
-				if (!containsUpcomingStream(upcommingStream)) {
+				
+				int streamIndex = containsUpcomingStream(upcommingStream);
+				if (streamIndex != -1) {	// do possible update to existing streams
+					upcommingStreams.get(streamIndex).updateStreamStartTime(stream);
+				}
+				else {	// add new stream
 					upcommingStreams.add(upcommingStream);
-					logger.info("New upcocmming stream " + upcommingStream.getStreamUrl());
+					logger.info("New upcoming stream " + upcommingStream.getStreamUrl());
 				}
 			}	
 		} catch (Exception e) {
@@ -80,7 +85,7 @@ public class StreamNotifierRunner extends Thread {
 			logger.warn("Failed to update upomming streams.");
 		}
 	}
-	
+		
 	private void notifyUpcomingStreams(boolean sendMessage) {
 		ListIterator<UpcommingStream> iter = upcommingStreams.listIterator();
 		while(iter.hasNext()) {

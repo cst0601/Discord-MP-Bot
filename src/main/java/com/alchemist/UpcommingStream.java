@@ -49,6 +49,21 @@ public class UpcommingStream {
 		return null;
 	}
 	
+	public void updateStreamStartTime(LiveStream updatedLiveStream) {
+		if (!liveStream.getStreamStartTime().equals(
+				updatedLiveStream.getStreamStartTime())) {
+			liveStream = updatedLiveStream;
+			upcommingNotificationTime = updatedLiveStream.getStreamStartTime().minusMinutes(5);
+			// update stream state
+			state = StreamState.INIT;
+			
+			// do not send message when updating stream start time
+			Message msg = broadcast();
+			while(msg != null)
+				broadcast();
+		}
+	}
+	
 	public boolean hasStarted() {
 		return state == StreamState.STARTED;
 	}
